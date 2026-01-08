@@ -66,6 +66,8 @@
                     {% else %}
                     <button class="btn" disabled>预约</button>
                     {% endif %}
+                    <!-- 新增查看按钮 -->
+                    <a href="{% url 'device_booking_detail' device.id %}" class="btn btn-info" style="margin-left: 5px;">查看</a>
                 </td>
             </tr>
             {% empty %}

@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ device.device_code }} - 预约记录 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'user_home' %}">首页</a>
+    <a href="{% url 'device_list' %}">设备查询</a>
+    <a href="{% url 'booking_apply' %}">预约申请</a>
+    <a href="{% url 'my_booking' %}">我的预约</a>
+    <a href="{% url 'user_profile' %}">个人信息</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <!-- 设备基本信息 -->
+    <div style="margin-bottom: 20px;">
+        <h2>设备预约记录</h2>
+        <div style="padding: 10px; background-color: #f8f9fa; border-radius: 4px; margin-top: 10px;">
+            <p><strong>设备编号：</strong>{{ device.device_code }}</p>
+            <p><strong>设备型号：</strong>{{ device.model }}</p>
+            <p><strong>生产厂商：</strong>{{ device.manufacturer }}</p>
+            <p><strong>当前状态：</strong>{{ device.status }}</p>
+        </div>
+        <!-- 返回按钮 -->
+        <a href="{% url 'device_list' %}" class="btn btn-secondary" style="margin-top: 10px;">返回设备列表</a>
+    </div>
+
+    <!-- 预约记录表格 -->
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f8f9fa;">
+                <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">预约人</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">预约人类型</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">预约日期</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">预约时段（2小时/单位）</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">审批状态</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">联系电话</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <!-- 1. 预约人：关联UserInfo的name字段 -->
+                <td style="padding: 8px; border: 1px solid #dee2e6;">{{ booking.applicant.name|default:"未知" }}</td>
+                
+                <!-- 2. 预约人类型：从UserInfo的user_type字段获取（适配常见取值） -->
+                <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {% if booking.applicant.user_type == 'student' %}
+                        校内学生
+                    {% elif booking.applicant.user_type == 'teacher' %}
+                        校内教师
+                    {% elif booking.applicant.user_type == 'external' %}
+                        校外人员
+                    {% else %}
+                        {{ booking.applicant.user_type|default:"未知" }}
+                    {% endif %}
+                </td>
+                
+                <!-- 3. 预约日期：格式化显示 -->
+                <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {{ booking.booking_date|date:"Y年m月d日"|default:"未填写" }}
+                </td>
+                
+                <!-- 4. 预约时段（强调2小时/单位） -->
+                <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {{ booking.time_slot|default:"未选择" }}（2小时/单位）
+                </td>
+                
+                <!-- 5. 审批状态：匹配模型中的APPROVAL_STATUS汉化显示 -->
+                <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {% if booking.status == 'pending' %}
+                        待管理员审批
+                    {% elif booking.status == 'admin_approved' %}
+                        管理员已批准（待负责人审批）
+                    {% elif booking.status == 'manager_approved' %}
+                        全部审批通过
+                    {% elif booking.status == 'admin_rejected' %}
+                        管理员已拒绝
+                    {% elif booking.status == 'manager_rejected' %}
+                        负责人已拒绝
+                    {% elif booking.status == 'cancelled' %}
+                        用户已撤销
+                    {% else %}
+                        {{ booking.status }}
+                    {% endif %}
+                </td>
+                
+                <!-- 6. 联系电话：从UserInfo的phone字段获取 -->
+                <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {{ booking.applicant.phone|default:"未填写" }}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" style="padding: 15px; border: 1px solid #dee2e6; text-align: center;">
+                    该设备暂无预约记录
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

@@ -5,6 +5,8 @@ from user.models import UserInfo
 from devices.models import Device
 from .models import Booking
 from .utils import generate_booking_code
+from django.http import JsonResponse
+from django.urls import reverse
 
 # 1. 设备预约申请页面
 @login_required
@@ -18,7 +20,7 @@ def booking_apply(request):
         return redirect('user_home')
     
     # 获取所有可用设备
-    devices = Device.objects.filter(status='available')
+    devices = Device.objects.filter(status='可用')
     
     if request.method == 'POST':
         # 获取表单数据
@@ -30,7 +32,7 @@ def booking_apply(request):
         
         # 校验设备是否存在且可用
         try:
-            device = Device.objects.get(device_code=device_code, status='available')
+            device = Device.objects.get(device_code=device_code, status='可用')
         except Device.DoesNotExist:
             messages.error(request, '该设备不存在或不可用！')
             return render(request, 'users/booking_apply.html', {
@@ -70,6 +72,7 @@ def booking_apply(request):
         'user_info': user_info,
         'devices': devices
     }
+    print(context['devices'])
     return render(request, 'user/booking_apply.html', context)
 
 # 2. 我的预约记录页面
@@ -125,3 +128,52 @@ def cancel_booking(request, booking_id):
     
     messages.success(request, '预约申请已成功撤销！')
     return redirect('my_booking')
+def device_booking_detail(request, device_id):
+    """设备预约详情页面"""
+    # 获取设备信息，不存在则返回404
+    device = get_object_or_404(Device, id=device_id)
+    # 查询该设备的所有预约记录（按预约时间倒序）
+    bookings = Booking.objects.filter(device=device).order_by('-create_time')
+    
+    context = {
+        'device': device,
+        'bookings': bookings
+    }
+    return render(request, 'user/device_booking_detail.html', context)
+def check_availability(request):
+    """检查设备在指定日期和时段是否空闲"""
+    device_id = request.GET.get('device_id')
+    booking_date = request.GET.get('date')
+    time_slot = request.GET.get('time_slot')
+
+    # 验证参数
+    if not all([device_id, booking_date, time_slot]):
+        return JsonResponse({
+            'available': False,
+            'reason': '参数不完整'
+        })
+
+    # 检查设备是否存在
+    try:
+        device = Device.objects.get(device_code=device_id)  # 注意匹配设备编号字段
+    except Device.DoesNotExist:
+        return JsonResponse({
+            'available': False,
+            'reason': '设备不存在'
+        })
+
+    # 检查该时段是否已有预约
+    existing_booking = Booking.objects.filter(
+        device__device_code=device_id,  # 关联设备
+        booking_date=booking_date,      # 预约日期
+        time_slot=time_slot,            # 预约时段
+        status__in=['pending', 'approved']  # 待审核或已通过的预约视为占用
+    ).exists()
+
+    if existing_booking:
+        return JsonResponse({
+            'available': False,
+            'reason': '已有其他预约'
+        })
+    else:
+        return JsonResponse({'available': True})
