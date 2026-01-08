@@ -1,0 +1,89 @@
+{% extends 'base.html' %}
+
+{% block title %}我的预约 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'user_home' %}">首页</a>
+    <a href="{% url 'device_list' %}">设备查询</a>
+    <a href="{% url 'booking_apply' %}">预约申请</a>
+    <a href="{% url 'my_booking' %}">我的预约</a>
+    <a href="{% url 'user_profile' %}">个人信息</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>我的设备预约记录</h2>
+    {% if messages %}
+        {% for msg in messages %}
+            <div style="padding: 10px; margin: 15px 0; border-radius: 4px; 
+                {% if msg.tags == 'success' %}background: #d4edda; color: #155724;{% endif %}
+                {% if msg.tags == 'error' %}background: #f8d7da; color: #721c24;{% endif %}">
+                {{ msg }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <!-- 状态筛选按钮 -->
+    <div style="margin: 20px 0;">
+        <a href="?status=all" class="btn {% if status_filter == 'all' %}btn-primary{% else %}btn-secondary{% endif %}">全部</a>
+        <a href="?status=pending" class="btn {% if status_filter == 'pending' %}btn-primary{% else %}btn-secondary{% endif %}">待审批</a>
+        <a href="?status=manager_approved" class="btn {% if status_filter == 'manager_approved' %}btn-primary{% else %}btn-secondary{% endif %}">已批准</a>
+        <a href="?status=admin_rejected" class="btn {% if status_filter == 'admin_rejected' %}btn-primary{% else %}btn-secondary{% endif %}">已拒绝</a>
+        <a href="?status=cancelled" class="btn {% if status_filter == 'cancelled' %}btn-primary{% else %}btn-secondary{% endif %}">已撤销</a>
+    </div>
+
+    <!-- 预约记录表格 -->
+    <table style="width: 100%; border-collapse: collapse;">
+        <thead>
+            <tr style="background: #f8f9fa;">
+                <th style="padding: 8px; border: 1px solid #dee2e6;">预约编号</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6;">设备编号</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6;">设备名称</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6;">预约日期</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6;">预约时段</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6;">审批状态</th>
+                <th style="padding: 8px; border: 1px solid #dee2e6;">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for booking in bookings %}
+            <tr>
+                <td style="padding: 8px; border: 1px solid #dee2e6;">{{ booking.booking_code }}</td>
+                <td style="padding: 8px; border: 1px solid #dee2e6;">{{ booking.device.device_code }}</td>
+                <td style="padding: 8px; border: 1px solid #dee2e6;">{{ booking.device.device_name }}</td>
+                <td style="padding: 8px; border: 1px solid #dee2e6;">{{ booking.booking_date }}</td>
+                <td style="padding: 8px; border: 1px solid #dee2e6;">{{ booking.time_slot }}</td>
+                <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {# 修复1：去掉列表，只用or判断 #}
+                    {% if booking.status == 'pending' %}
+                        <span style="color: #ffc107;">待审批</span>
+                    {% elif booking.status == 'manager_approved' %}
+                        <span style="color: #28a745;">已批准</span>
+                    {% elif booking.status == 'admin_rejected' or booking.status == 'manager_rejected' %}
+                        <span style="color: #dc3545;">已拒绝</span>
+                    {% elif booking.status == 'cancelled' %}
+                        <span style="color: #6c757d;">已撤销</span>
+                    {% else %}
+                        <span style="color: #17a2b8;">{{ booking.get_status_display }}</span>
+                    {% endif %}
+                </td>
+                <td style="padding: 8px; border: 1px solid #dee2e6;">
+                    {# 修复2：去掉列表，只用or判断 #}
+                    {% if booking.status == 'pending' or booking.status == 'admin_approved' %}
+                        <a href="{% url 'cancel_booking' booking.id %}" class="btn btn-danger btn-sm" onclick="return confirm('确定撤销该预约吗？')">撤销</a>
+                    {% else %}
+                        <button class="btn btn-secondary btn-sm" disabled>查看详情</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">暂无预约记录</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

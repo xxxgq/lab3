@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}负责人报表统计 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'manager_home' %}">首页</a>
+    <a href="{% url 'manager_booking_approve' %}">校外人员预约审批</a>
+    <a href="{% url 'user_manage' %}">用户管理</a>
+    <a href="{% url 'manager_report_stat' %}">报表统计</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>实验室负责人 - 设备使用报表统计</h2>
+    <!-- 以下内容可复用admin/report_stat.html的内容，或调整成负责人视角的报表 -->
+    <div style="margin-bottom: 20px;">
+        <label>报表类型：</label>
+        <select name="report_type" onchange="changeReportType(this.value)">
+            <option value="week">周报表</option>
+            <option value="month">月报表</option>
+            <option value="year">年报表</option>
+        </select>
+        <label style="margin-left: 20px;">统计时间：</label>
+        <input type="month" name="stat_time" value="2025-12">
+        <button class="btn">生成报表</button>
+        <button class="btn btn-success">导出报表</button>
+        <button class="btn">打印报表</button>
+    </div>
+
+    <div>
+        <h3>2025年12月设备使用统计报表（负责人视角）</h3>
+        <div style="display: flex; gap: 20px; margin: 20px 0;">
+            <div style="width: 400px; height: 300px; background-color: #f5f5f5; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                设备采购/报废趋势图（演示）
+            </div>
+            <div style="width: 400px; height: 300px; background-color: #f5f5f5; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                校外人员收费统计饼图（演示）
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>设备编号</th>
+                    <th>设备名称</th>
+                    <th>总预约次数</th>
+                    <th>校外收费金额（元）</th>
+                    <th>是否需采购补充</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>DEV001</td>
+                    <td>型号A-100 物理实验设备</td>
+                    <td>25</td>
+                    <td>0</td>
+                    <td>否</td>
+                </tr>
+                <tr>
+                    <td>DEV002</td>
+                    <td>型号B-200 化学实验设备</td>
+                    <td>18</td>
+                    <td>450</td>
+                    <td>是（建议采购2台）</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        function changeReportType(type) {
+            alert(`已切换为${type === 'week' ? '周' : type === 'month' ? '月' : '年'}报表（负责人视角）`);
+        }
+    </script>
+</div>
+{% endblock %}

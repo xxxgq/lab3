@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+
+{% block title %}报表统计 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'admin_home' %}">首页</a>
+    <a href="{% url 'booking_approve' %}">预约审批</a>
+    <a href="{% url 'device_manage' %}">设备管理</a>
+    <a href="{% url 'report_stat' %}">报表统计</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>设备使用报表统计</h2>
+    <div style="margin-bottom: 20px;">
+        <label>报表类型：</label>
+        <select name="report_type" onchange="changeReportType(this.value)">
+            <option value="week">周报表</option>
+            <option value="month">月报表</option>
+            <option value="year">年报表</option>
+        </select>
+        <label style="margin-left: 20px;">统计时间：</label>
+        <input type="month" name="stat_time" value="2025-12">
+        <button class="btn">生成报表</button>
+        <button class="btn btn-success">导出报表</button>
+        <button class="btn">打印报表</button>
+    </div>
+
+    <!-- 报表展示区域 -->
+    <div>
+        <h3>2025年12月设备使用统计报表</h3>
+        <div style="display: flex; gap: 20px; margin: 20px 0;">
+            <!-- 模拟图表占位 -->
+            <div style="width: 400px; height: 300px; background-color: #f5f5f5; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                设备使用率柱状图（演示）
+            </div>
+            <div style="width: 400px; height: 300px; background-color: #f5f5f5; border: 1px solid #ddd; display: flex; align-items: center; justify-content: center;">
+                不同用户类型借用占比饼图（演示）
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>设备编号</th>
+                    <th>设备名称</th>
+                    <th>总预约次数</th>
+                    <th>实际使用时长（小时）</th>
+                    <th>使用率</th>
+                    <th>校外收费金额（元）</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>DEV001</td>
+                    <td>型号A-100 物理实验设备</td>
+                    <td>25</td>
+                    <td>50</td>
+                    <td>85%</td>
+                    <td>0</td>
+                </tr>
+                <tr>
+                    <td>DEV002</td>
+                    <td>型号B-200 化学实验设备</td>
+                    <td>18</td>
+                    <td>36</td>
+                    <td>60%</td>
+                    <td>450</td>
+                </tr>
+                <tr>
+                    <td>DEV003</td>
+                    <td>型号C-300 生物实验设备</td>
+                    <td>32</td>
+                    <td>64</td>
+                    <td>90%</td>
+                    <td>600</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+    <script>
+        // 模拟报表类型切换（仅前端演示）
+        function changeReportType(type) {
+            alert(`已切换为${type === 'week' ? '周' : type === 'month' ? '月' : '年'}报表，此处仅为演示，实际需加载对应数据`);
+        }
+    </script>
+</div>
+{% endblock %}

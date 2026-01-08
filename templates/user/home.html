@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}用户首页 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'user_home' %}">首页</a>
+    <a href="{% url 'device_list' %}">设备查询</a>
+    <a href="{% url 'booking_apply' %}">预约申请</a>
+    <a href="{% url 'my_booking' %}">我的预约</a>
+    <a href="{% url 'user_profile' %}">个人信息</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>普通用户操作中心</h2>
+    <p style="margin: 10px 0;">欢迎使用江南大学实验室设备管理系统！</p>
+    <div style="display: flex; gap: 20px; margin-top: 20px;">
+        <a href="{% url 'device_list' %}" class="btn">
+            <i>📱</i> 查看可用设备
+        </a>
+        <a href="{% url 'booking_apply' %}" class="btn btn-success">
+            <i>📝</i> 提交设备预约
+        </a>
+        <a href="{% url 'my_booking' %}" class="btn">
+            <i>📋</i> 查看我的预约
+        </a>
+    </div>
+    <div style="margin-top: 30px;">
+        <h3>使用须知</h3>
+        <ul style="margin-left: 20px; margin-top: 10px; line-height: 1.8;">
+            <li>校内人员可免费借用设备，校外人员需付费借用</li>
+            <li>设备需提前1-7天预约，每次借用时间单位为2小时</li>
+            <li>已批准的预约撤销需至少提前1天，付费预约仅退还95%费用</li>
+        </ul>
+    </div>
+</div>
+{% endblock %}

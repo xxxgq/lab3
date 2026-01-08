@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}设备查询 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'user_home' %}">首页</a>
+    <a href="{% url 'device_list' %}">设备查询</a>
+    <a href="{% url 'booking_apply' %}">预约申请</a>
+    <a href="{% url 'my_booking' %}">我的预约</a>
+    <a href="{% url 'user_profile' %}">个人信息</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>实验设备查询</h2>
+    <!-- 搜索框：改为表单提交，支持GET请求传递搜索关键词 -->
+    <div class="form-group" style="margin-bottom: 20px;">
+        <form method="get" style="display: inline-block;">
+            <input 
+                type="text" 
+                name="keyword" 
+                placeholder="输入设备编号/型号/厂商/用途搜索" 
+                style="width: 500px;"
+                value="{{ keyword|default:'' }}"  <!-- 回显搜索关键词 -->
+            >
+            <button type="submit" class="btn">搜索</button>
+            <!-- 清空搜索按钮：无关键词时隐藏 -->
+            {% if keyword %}
+            <a href="{% url 'device_list' %}" class="btn">清空</a>
+            {% endif %}
+        </form>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>设备编号</th>
+                <th>型号</th>
+                <th>生产厂商</th>
+                <th>实验用途</th>
+                <th>可用状态</th>
+                <th>租用价格</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- 动态循环数据库中的设备数据 -->
+            {% for device in devices %}
+            <tr>
+                <td>{{ device.device_code }}</td>
+                <td>{{ device.model }}</td>
+                <td>{{ device.manufacturer }}</td>
+                <td>{{ device.purpose }}</td>
+                <td>{{ device.status }}</td>
+                <td>
+                    <!-- 区分校内/校外价格显示 -->
+                    {{ device.price_internal }}元/2小时（校内）<br>
+                    {{ device.price_external }}元/2小时（校外）
+                </td>
+                <td>
+                    <!-- 仅“可用”状态显示可点击的预约按钮，其他状态禁用 -->
+                    {% if device.status == '可用' %}
+                    <a href="{% url 'booking_apply' %}?device_id={{ device.id }}" class="btn btn-success">预约</a>
+                    {% else %}
+                    <button class="btn" disabled>预约</button>
+                    {% endif %}
+                </td>
+            </tr>
+            {% empty %}
+            <!-- 无设备数据时的提示 -->
+            <tr>
+                <td colspan="7" class="text-center">
+                    {% if keyword %}
+                    未找到“{{ keyword }}”相关的设备，请更换关键词重试！
+                    {% else %}
+                    暂无设备数据
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
