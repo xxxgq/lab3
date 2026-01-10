@@ -67,7 +67,7 @@
                     <th style="min-width: 120px;">专业方向</th>
                     <th style="min-width: 120px;">所在学院</th>
                     <th style="min-width: 100px;">联系电话</th>
-                    <th style="min-width: 80px;">借用次数</th>
+                    <th style="min-width: 200px;">借用设备</th>
                     <th style="min-width: 140px;">创建时间</th>
                 </tr>
             </thead>
@@ -81,7 +81,14 @@
                     <td>{{ teacher.research_field|default:"-" }}</td>
                     <td>{{ teacher.department }}</td>
                     <td>{{ teacher.phone }}</td>
-                    <td>{{ teacher.booking_count }}</td>
+                    <td>
+                        {% for booking in teacher.booking_set.all %}
+                            {{ booking.device.device_code }}{% if not forloop.last %}、{% endif %}
+                        {% empty %}
+                            -
+                        {% endfor %}
+                        <span style="color: #999; font-size: 12px;">({{ teacher.booking_count }}次)</span>
+                    </td>
                     <td>{{ teacher.create_time|date:"Y-m-d H:i" }}</td>
                 </tr>
                 {% empty %}

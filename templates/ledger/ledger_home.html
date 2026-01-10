@@ -13,26 +13,150 @@
 {% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <h2>台账管理</h2>
+<style>
+    .ledger-container {
+        width: 100%;
+    }
+    .ledger-header {
+        margin-bottom: 30px;
+    }
+    .ledger-header h2 {
+        color: #2c3e50;
+        margin-bottom: 10px;
+        font-size: 24px;
+        font-weight: 600;
+    }
+    .ledger-header p {
+        color: #7f8c8d;
+        font-size: 14px;
+        margin: 0;
+    }
+    .ledger-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+        gap: 25px;
+        margin-top: 20px;
+    }
+    .ledger-card {
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        padding: 25px;
+        display: flex;
+        flex-direction: column;
+        transition: transform 0.2s, box-shadow 0.2s;
+        border: 1px solid #e0e0e0;
+        min-height: 220px;
+    }
+    .ledger-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+        border-color: #3498db;
+    }
+    .ledger-card-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 15px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #3498db;
+        line-height: 1.4;
+    }
+    .ledger-card-desc {
+        color: #555;
+        font-size: 14px;
+        line-height: 1.7;
+        flex-grow: 1;
+        margin-bottom: 20px;
+        word-wrap: break-word;
+        overflow-wrap: break-word;
+        overflow: hidden;
+    }
+    .ledger-card-btn {
+        display: block;
+        padding: 12px 20px;
+        background-color: #3498db;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        text-align: center;
+        transition: background-color 0.2s;
+        font-size: 15px;
+        margin-top: auto;
+        width: 100%;
+        box-sizing: border-box;
+        font-weight: 500;
+    }
+    .ledger-card-btn:hover {
+        background-color: #2980b9;
+        color: white;
+        text-decoration: none;
+    }
+    .sidebar a.active {
+        background-color: #3498db;
+        font-weight: 600;
+    }
+    @media (max-width: 768px) {
+        .ledger-grid {
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+        .ledger-card {
+            min-height: auto;
+        }
+    }
+</style>
 
-    <div class="row mt-4">
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body p-4">
-                    <h5 class="card-title mb-4">设备台账</h5>
-                    <a href="{% url 'ledger:device_ledger_list' %}" class="btn btn-primary">进入设备台账</a>
-                </div>
+<div class="ledger-container">
+    <div class="ledger-header">
+        <h2>台账管理</h2>
+        <p>请选择要查看的台账类型</p>
+    </div>
+
+    <div class="ledger-grid">
+        <!-- 设备台账 -->
+        <div class="ledger-card">
+            <div class="ledger-card-title">📋 设备台账</div>
+            <div class="ledger-card-desc">
+                记录所有设备的信息，包括设备编号、型号、购入时间、生产厂商、实验用途、时段可用状态、租用价格等
             </div>
+            <a href="{% url 'ledger:device_ledger_list' %}" class="ledger-card-btn">进入设备台账</a>
         </div>
 
-        <div class="col-md-6">
-            <div class="card h-100">
-                <div class="card-body d-flex flex-column justify-content-between p-4">
-                    <h5 class="card-title">其他台账</h5>
-                    <button class="btn btn-secondary" disabled>敬请期待</button>
-                </div>
+        <!-- 教师台账 -->
+        <div class="ledger-card">
+            <div class="ledger-card-title">👨‍🏫 教师台账</div>
+            <div class="ledger-card-desc">
+                记录申请过设备借用的教师信息，包括教师编号、姓名、性别、职称、专业方向、所在学院等
             </div>
+            <a href="{% url 'ledger:teacher_ledger_list' %}" class="ledger-card-btn">进入教师台账</a>
+        </div>
+
+        <!-- 学生台账 -->
+        <div class="ledger-card">
+            <div class="ledger-card-title">👨‍🎓 学生台账</div>
+            <div class="ledger-card-desc">
+                记录申请过设备借用的学生信息，包括学号、姓名、性别、专业、导师、所在学院等
+            </div>
+            <a href="{% url 'ledger:student_ledger_list' %}" class="ledger-card-btn">进入学生台账</a>
+        </div>
+
+        <!-- 校外人员台账 -->
+        <div class="ledger-card">
+            <div class="ledger-card-title">🏢 校外人员台账</div>
+            <div class="ledger-card-desc">
+                记录申请过设备借用的校外人员信息，包括编号、姓名、性别、所在单位名称等
+            </div>
+            <a href="{% url 'ledger:external_ledger_list' %}" class="ledger-card-btn">进入校外人员台账</a>
+        </div>
+
+        <!-- 预约台账 -->
+        <div class="ledger-card">
+            <div class="ledger-card-title">📅 预约台账</div>
+            <div class="ledger-card-desc">
+                记录借用设备的预约申请信息，包括设备相关信息、借用人员相关信息、借用时段、预约审批相关信息等
+            </div>
+            <a href="{% url 'ledger:booking_ledger_list' %}" class="ledger-card-btn">进入预约台账</a>
         </div>
     </div>
 </div>

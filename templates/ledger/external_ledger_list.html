@@ -61,7 +61,7 @@
                     <th style="min-width: 60px;">性别</th>
                     <th style="min-width: 150px;">所在单位名称</th>
                     <th style="min-width: 100px;">联系电话</th>
-                    <th style="min-width: 80px;">借用次数</th>
+                    <th style="min-width: 200px;">借用设备</th>
                     <th style="min-width: 140px;">创建时间</th>
                 </tr>
             </thead>
@@ -73,7 +73,14 @@
                     <td>{{ external.gender }}</td>
                     <td>{{ external.department }}</td>
                     <td>{{ external.phone }}</td>
-                    <td>{{ external.booking_count }}</td>
+                    <td>
+                        {% for booking in external.booking_set.all %}
+                            {{ booking.device.device_code }}{% if not forloop.last %}、{% endif %}
+                        {% empty %}
+                            -
+                        {% endfor %}
+                        <span style="color: #999; font-size: 12px;">({{ external.booking_count }}次)</span>
+                    </td>
                     <td>{{ external.create_time|date:"Y-m-d H:i" }}</td>
                 </tr>
                 {% empty %}

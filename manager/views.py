@@ -83,11 +83,100 @@ def booking_approve(request):
 
 @login_required
 def manager_report_stat(request):
-    """负责人报表统计页面（只能查看，不能生成）"""
+    """负责人报表统计页面（可以查看和生成）"""
     from labadmin.models import Report
+    from labadmin.views import generate_report_data
+    from django.contrib import messages
+    from django.shortcuts import redirect
+    from datetime import datetime, timedelta, date
+    from decimal import Decimal
     
     # 获取已生成的报表列表
     reports = Report.objects.all().order_by('-generated_at')[:20]
+    
+    # 获取筛选条件
+    report_type_filter = request.GET.get('report_type', '')
+    date_filter = request.GET.get('date', '')
+    
+    if report_type_filter:
+        reports = reports.filter(report_type=report_type_filter)
+    
+    # 处理报表生成请求
+    if request.method == 'POST' and 'generate' in request.POST:
+        report_type = request.POST.get('report_type')
+        date_input = request.POST.get('date_input')
+        
+        if not report_type or not date_input:
+            messages.error(request, '请选择报表类型和日期！')
+            return redirect('manager_report_stat')
+        
+        try:
+            # 解析日期
+            if report_type == 'week':
+                # 周报表：输入日期所在周的周一和周日
+                input_date = datetime.strptime(date_input, '%Y-%m-%d').date()
+                start_date = input_date - timedelta(days=input_date.weekday())
+                end_date = start_date + timedelta(days=6)
+                report_name = f"{start_date.strftime('%Y年%m月%d日')} 至 {end_date.strftime('%Y年%m月%d日')} 周报表"
+            elif report_type == 'month':
+                # 月报表：输入日期所在月的第一天和最后一天
+                # 处理 YYYY-MM 格式
+                if len(date_input) == 7 and date_input.count('-') == 1:
+                    year, month = map(int, date_input.split('-'))
+                else:
+                    # 尝试解析为日期
+                    input_date = datetime.strptime(date_input, '%Y-%m-%d').date()
+                    year, month = input_date.year, input_date.month
+                start_date = date(year, month, 1)
+                if month == 12:
+                    end_date = date(year + 1, 1, 1) - timedelta(days=1)
+                else:
+                    end_date = date(year, month + 1, 1) - timedelta(days=1)
+                report_name = f"{year}年{month:02d}月报表"
+            elif report_type == 'year':
+                # 年报表：输入日期所在年的1月1日和12月31日
+                year = int(date_input)
+                start_date = date(year, 1, 1)
+                end_date = date(year, 12, 31)
+                report_name = f"{year}年报表"
+            else:
+                messages.error(request, '无效的报表类型！')
+                return redirect('manager_report_stat')
+            
+            # 检查是否已存在相同报表
+            existing_report = Report.objects.filter(
+                report_type=report_type,
+                start_date=start_date,
+                end_date=end_date
+            ).first()
+            
+            if existing_report:
+                messages.info(request, f'该时间段报表已存在，已为您加载：{existing_report.report_name}')
+                return redirect('manager_report_stat')
+            
+            # 生成报表数据
+            report_data = generate_report_data(report_type, start_date, end_date)
+            
+            # 创建报表记录
+            report = Report.objects.create(
+                report_type=report_type,
+                report_name=report_name,
+                start_date=start_date,
+                end_date=end_date,
+                report_data=report_data,
+                total_bookings=report_data['summary']['total_bookings'],
+                total_devices=report_data['summary']['total_devices'],
+                total_users=report_data['summary']['total_users'],
+                total_revenue=Decimal(str(report_data['summary']['total_revenue'])),
+                generated_by=request.user
+            )
+            
+            messages.success(request, f'报表生成成功：{report_name}')
+            return redirect('manager_report_stat')
+            
+        except Exception as e:
+            messages.error(request, f'生成报表失败：{str(e)}')
+            return redirect('manager_report_stat')
     
     # 查看报表详情
     report_id = request.GET.get('view')
@@ -96,12 +185,13 @@ def manager_report_stat(request):
         try:
             current_report = Report.objects.get(id=report_id)
         except Report.DoesNotExist:
-            from django.contrib import messages
             messages.error(request, '报表不存在！')
     
     context = {
         'reports': reports,
         'current_report': current_report,
+        'report_type_filter': report_type_filter,
+        'date_filter': date_filter,
     }
     return render(request, 'manager/report_stat.html', context)
 

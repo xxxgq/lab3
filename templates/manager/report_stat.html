@@ -7,6 +7,7 @@
     <a href="{% url 'manager_home' %}">首页</a>
     <a href="{% url 'manager_booking_approve' %}">校外人员预约审批</a>
     <a href="{% url 'user_manage' %}">用户管理</a>
+    <a href="{% url 'ledger:ledger_home' %}">台账</a>
     <a href="{% url 'manager_report_stat' %}" class="active">报表统计</a>
 </div>
 {% endblock %}
@@ -14,7 +15,36 @@
 {% block content %}
 <div class="card">
     <h2>实验室负责人 - 设备使用报表统计</h2>
-    <p style="color: #666; margin-bottom: 20px;">负责人可以查看所有已生成的报表</p>
+    
+    <!-- 生成报表表单 -->
+    <div style="margin-bottom: 30px; padding: 20px; background-color: #f5f5f5; border-radius: 5px;">
+        <h3 style="margin-bottom: 15px;">生成新报表</h3>
+        <form method="post" style="display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+            {% csrf_token %}
+            <div>
+                <label style="display: block; margin-bottom: 5px;">报表类型：</label>
+                <select name="report_type" class="form-control" required style="width: 150px;">
+                    <option value="week">周报表</option>
+                    <option value="month">月报表</option>
+                    <option value="year">年报表</option>
+                </select>
+            </div>
+            <div>
+                <label style="display: block; margin-bottom: 5px;">日期：</label>
+                <input type="text" name="date_input" class="form-control" required 
+                       placeholder="周报表: YYYY-MM-DD, 月报表: YYYY-MM, 年报表: YYYY"
+                       style="width: 250px;" id="date_input">
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    周报表：选择日期（如 2025-01-10）<br>
+                    月报表：选择月份（如 2025-01）<br>
+                    年报表：输入年份（如 2025）
+                </small>
+            </div>
+            <div>
+                <button type="submit" name="generate" class="btn btn-primary">生成报表</button>
+            </div>
+        </form>
+    </div>
     
     <!-- 已生成报表列表 -->
     <div style="margin-bottom: 30px;">
@@ -53,7 +83,7 @@
             </table>
         </div>
         {% else %}
-        <p style="color: #666;">暂无已生成的报表，请联系管理员生成报表</p>
+        <p style="color: #666;">暂无已生成的报表</p>
         {% endif %}
     </div>
 
@@ -155,4 +185,24 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+    // 根据报表类型自动调整日期输入格式
+    document.querySelector('select[name="report_type"]').addEventListener('change', function() {
+        const dateInput = document.getElementById('date_input');
+        const type = this.value;
+        
+        if (type === 'week') {
+            dateInput.type = 'date';
+            dateInput.placeholder = '选择日期（如 2025-01-10）';
+        } else if (type === 'month') {
+            dateInput.type = 'month';
+            dateInput.placeholder = '选择月份（如 2025-01）';
+        } else if (type === 'year') {
+            dateInput.type = 'text';
+            dateInput.placeholder = '输入年份（如 2025）';
+            dateInput.pattern = '[0-9]{4}';
+        }
+    });
+</script>
 {% endblock %}

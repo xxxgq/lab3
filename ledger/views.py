@@ -127,11 +127,11 @@ def device_operation_history_list(request):
 @check_ledger_permission
 def teacher_ledger_list(request):
     """教师台账列表视图：显示申请过设备借用的教师信息"""
-    # 筛选出申请过设备借用的教师（通过Booking关联）
+    # 筛选出申请过设备借用的教师（通过Booking关联），预加载设备信息
     teachers = UserInfo.objects.filter(
         user_type='teacher',
         booking__isnull=False
-    ).distinct().annotate(
+    ).distinct().prefetch_related('booking_set__device').annotate(
         booking_count=Count('booking')
     ).order_by('user_code')
 
@@ -168,11 +168,11 @@ def teacher_ledger_list(request):
 @check_ledger_permission
 def student_ledger_list(request):
     """学生台账列表视图：显示申请过设备借用的学生信息"""
-    # 筛选出申请过设备借用的学生（通过Booking关联）
+    # 筛选出申请过设备借用的学生（通过Booking关联），预加载设备信息
     students = UserInfo.objects.filter(
         user_type='student',
         booking__isnull=False
-    ).distinct().annotate(
+    ).distinct().prefetch_related('booking_set__device').annotate(
         booking_count=Count('booking')
     ).order_by('user_code')
 
@@ -213,11 +213,11 @@ def student_ledger_list(request):
 @check_ledger_permission
 def external_ledger_list(request):
     """校外人员台账列表视图：显示申请过设备借用的校外人员信息"""
-    # 筛选出申请过设备借用的校外人员（通过Booking关联）
+    # 筛选出申请过设备借用的校外人员（通过Booking关联），预加载设备信息
     externals = UserInfo.objects.filter(
         user_type='external',
         booking__isnull=False
-    ).distinct().annotate(
+    ).distinct().prefetch_related('booking_set__device').annotate(
         booking_count=Count('booking')
     ).order_by('user_code')
 
@@ -360,7 +360,7 @@ def export_teacher_ledger_csv(request):
     teachers = UserInfo.objects.filter(
         user_type='teacher',
         booking__isnull=False
-    ).distinct().annotate(
+    ).distinct().prefetch_related('booking_set__device').annotate(
         booking_count=Count('booking')
     ).order_by('user_code')
 
@@ -390,10 +390,13 @@ def export_teacher_ledger_csv(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        '教师编号', '姓名', '性别', '职称', '专业方向', '所在学院', '联系电话', '借用次数', '创建时间'
+        '教师编号', '姓名', '性别', '职称', '专业方向', '所在学院', '联系电话', '借用设备', '创建时间'
     ])
 
     for teacher in teachers:
+        # 获取所有借用的设备编号，多次借用就记录多次
+        device_codes = [booking.device.device_code for booking in teacher.booking_set.all()]
+        device_str = '、'.join(device_codes) if device_codes else '-'
         writer.writerow([
             teacher.user_code,
             teacher.name,
@@ -402,7 +405,7 @@ def export_teacher_ledger_csv(request):
             teacher.research_field or '-',
             teacher.department,
             teacher.phone,
-            teacher.booking_count,
+            device_str,
             teacher.create_time.strftime('%Y-%m-%d %H:%M:%S'),
         ])
 
@@ -415,7 +418,7 @@ def export_student_ledger_csv(request):
     students = UserInfo.objects.filter(
         user_type='student',
         booking__isnull=False
-    ).distinct().annotate(
+    ).distinct().prefetch_related('booking_set__device').annotate(
         booking_count=Count('booking')
     ).order_by('user_code')
 
@@ -449,10 +452,13 @@ def export_student_ledger_csv(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        '学号', '姓名', '性别', '专业', '导师', '所在学院', '联系电话', '借用次数', '创建时间'
+        '学号', '姓名', '性别', '专业', '导师', '所在学院', '联系电话', '借用设备', '创建时间'
     ])
 
     for student in students:
+        # 获取所有借用的设备编号，多次借用就记录多次
+        device_codes = [booking.device.device_code for booking in student.booking_set.all()]
+        device_str = '、'.join(device_codes) if device_codes else '-'
         writer.writerow([
             student.user_code,
             student.name,
@@ -461,7 +467,7 @@ def export_student_ledger_csv(request):
             student.advisor or '-',
             student.department,
             student.phone,
-            student.booking_count,
+            device_str,
             student.create_time.strftime('%Y-%m-%d %H:%M:%S'),
         ])
 
@@ -474,7 +480,7 @@ def export_external_ledger_csv(request):
     externals = UserInfo.objects.filter(
         user_type='external',
         booking__isnull=False
-    ).distinct().annotate(
+    ).distinct().prefetch_related('booking_set__device').annotate(
         booking_count=Count('booking')
     ).order_by('user_code')
 
@@ -500,17 +506,20 @@ def export_external_ledger_csv(request):
 
     writer = csv.writer(response)
     writer.writerow([
-        '编号', '姓名', '性别', '所在单位名称', '联系电话', '借用次数', '创建时间'
+        '编号', '姓名', '性别', '所在单位名称', '联系电话', '借用设备', '创建时间'
     ])
 
     for external in externals:
+        # 获取所有借用的设备编号，多次借用就记录多次
+        device_codes = [booking.device.device_code for booking in external.booking_set.all()]
+        device_str = '、'.join(device_codes) if device_codes else '-'
         writer.writerow([
             external.user_code,
             external.name,
             external.gender,
             external.department,
             external.phone,
-            external.booking_count,
+            device_str,
             external.create_time.strftime('%Y-%m-%d %H:%M:%S'),
         ])
 
