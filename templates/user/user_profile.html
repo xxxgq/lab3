@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+
+{% block title %}个人信息 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'user_home' %}">首页</a>
+    <a href="{% url 'device_list' %}">设备查询</a>
+    <a href="{% url 'booking_apply' %}">预约申请</a>
+    <a href="{% url 'my_booking' %}">我的预约</a>
+    <a href="{% url 'user_profile' %}">个人信息</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>个人信息管理</h2>
+    <!-- 错误/成功提示 -->
+    {% if messages %}
+        {% for message in messages %}
+            <div style="padding: 10px; margin: 15px 0; border-radius: 4px; 
+                {% if message.tags == 'success' %}background-color: #d4edda; color: #155724;{% endif %}
+                {% if message.tags == 'error' %}background-color: #f8d7da; color: #721c24;{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: flex; gap: 40px; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px;">用户类型</label>
+                    <select name="user_type" disabled style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                        <option value="student" {% if user_info.user_type == 'student' %}selected{% endif %}>校内学生</option>
+                        <option value="teacher" {% if user_info.user_type == 'teacher' %}selected{% endif %}>校内教师</option>
+                        <option value="external" {% if user_info.user_type == 'external' or user_info.user_type == 'outside' %}selected{% endif %}>校外人员</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px;">用户名/学号/编号</label>
+                    <input type="text" name="user_id" value="{{ user_info.user_code }}" readonly 
+                           style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; background-color: #e9ecef;">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px;">姓名</label>
+                    <input type="text" name="name" value="{{ user_info.name }}" required 
+                           style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                           placeholder="请输入姓名">
+                </div>
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px;">性别</label>
+                    <select name="gender" required style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                        <option value="男" {% if user_info.gender == '男' %}selected{% endif %}>男</option>
+                        <option value="女" {% if user_info.gender == '女' %}selected{% endif %}>女</option>
+                    </select>
+                </div>
+            </div>
+            <div style="flex: 1; min-width: 300px;">
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px;">所在学院/单位</label>
+                    <input type="text" name="department" value="{{ user_info.department }}" required 
+                           style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                           placeholder="请输入学院/单位名称">
+                </div>
+                <!-- 【动态显示】不同用户类型显示不同字段 -->
+                {% if user_info.user_type == 'student' %}
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px;">专业</label>
+                        <input type="text" name="major" value="{{ user_info.major|default:'' }}" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                               placeholder="请输入专业名称">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px;">指导教师</label>
+                        <input type="text" name="advisor" value="{{ user_info.advisor|default:'' }}" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                               placeholder="请输入指导教师姓名">
+                    </div>
+                {% elif user_info.user_type == 'teacher' %}
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px;">职称</label>
+                        <input type="text" name="title" value="{{ user_info.title|default:'' }}" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                               placeholder="请输入职称（如教授/副教授）">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px;">研究方向</label>
+                        <input type="text" name="research_field" value="{{ user_info.research_field|default:'' }}" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                               placeholder="请输入研究方向">
+                    </div>
+                {% elif user_info.user_type == 'external' %}
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px;">职务</label>
+                        <input type="text" name="position" value="{{ user_info.position|default:'' }}" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                               placeholder="请输入职务">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px;">单位地址</label>
+                        <input type="text" name="company_address" value="{{ user_info.company_address|default:'' }}" required 
+                               style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                               placeholder="请输入单位详细地址">
+                    </div>
+                {% endif %}
+                <div class="form-group" style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px;">联系电话</label>
+                    <input type="tel" name="phone" value="{{ user_info.phone }}" required 
+                           style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"
+                           placeholder="请输入联系电话">
+                </div>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-success" style="padding: 8px 20px;">保存修改</button>
+        <!-- 跳转到修改密码页面 -->
+        <button type="button" class="btn btn-secondary" style="margin-left: 10px; padding: 8px 20px;" 
+                onclick="window.location.href='{% url 'change_password' %}'">修改密码</button>
+    </form>
+    
+    <!-- 【动态显示】教师用户专属：指导学生列表 -->
+    {% if user_info.user_type == 'teacher' %}
+    <div style="margin-top: 40px;" id="teacher_student_list">
+        <h3 style="margin-bottom: 10px;">指导学生列表管理</h3>
+        <button class="btn btn-primary" style="margin-bottom: 10px; padding: 8px 20px;">批量导入（Excel）</button>
+        <table style="margin-top: 10px; width: 100%; border-collapse: collapse;">
+            <thead>
+                <tr style="background-color: #f8f9fa;">
+                    <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">学号</th>
+                    <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">姓名</th>
+                    <th style="padding: 8px; border: 1px solid #dee2e6; text-align: left;">专业</th>
+                    <th style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for student in advisor_students %}
+                <tr>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">{{ student.user_code }}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">{{ student.name }}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6;">{{ student.major|default:'-' }}</td>
+                    <td style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">
+                        <button class="btn btn-danger btn-sm" style="padding: 4px 8px;"
+                                onclick="return confirm('确定要移除该学生吗？')">移除</button>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" style="padding: 8px; border: 1px solid #dee2e6; text-align: center;">暂无指导学生</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

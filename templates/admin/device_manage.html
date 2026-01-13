@@ -1,0 +1,124 @@
+{% extends 'base.html' %}
+
+{% block title %}设备管理 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'admin_home' %}">首页</a>
+    <a href="{% url 'booking_approve' %}">预约审批</a>
+    <a href="{% url 'device_manage' %}">设备管理</a>
+    <a href="{% url 'report_stat' %}">报表统计</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- 增加锚点 top，用于取消按钮跳转 -->
+<div id="top" class="card">
+    <h2>实验设备信息管理</h2>
+    <div style="margin-bottom: 20px;">
+        <button class="btn btn-success" onclick="location.href='#add_device'">新增设备</button>
+        <button class="btn">导出设备台账</button>
+        <!-- 搜索框：修改为表单提交，传递 keyword 参数 -->
+        <form method="get" style="display: inline-block;">
+            <input type="text" name="keyword" placeholder="输入设备编号/名称搜索" style="width: 300px; margin-left: 20px;" value="{{ keyword|default:'' }}">
+            <button type="submit" class="btn">搜索</button>
+        </form>
+    </div>
+
+    <!-- 设备列表：替换模拟数据为真实数据库循环 -->
+    <table>
+        <thead>
+            <tr>
+                <th>设备编号</th>
+                <th>型号</th>
+                <th>生产厂商</th>
+                <th>购入时间</th>
+                <th>实验用途</th>
+                <th>可用状态</th>
+                <th>租用价格</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for device in devices %}
+            <tr>
+                <td>{{ device.device_code }}</td>
+                <td>{{ device.model }}</td>
+                <td>{{ device.manufacturer }}</td>
+                <td>{{ device.purchase_date|date:"Y-m-d" }}</td>
+                <td>{{ device.purpose }}</td>
+                <td>{{ device.status }}</td>
+                <td>
+                    {{ device.price_internal }}元/2小时（校内）<br>
+                    {{ device.price_external }}元/2小时（校外）
+                </td>
+                <td>
+                    <!-- 1. 编辑按钮（保留） -->
+                    <a href="{% url 'device_detail' pk=device.pk %}" class="btn btn-primary">编辑</a>
+                    
+                    <!-- 2. 状态切换按钮：根据当前状态显示“标记不可用”或“标记可用” -->
+                    {% if device.status == '可用' %}
+                    <a href="{% url 'device_manage' %}?status_action=unavailable&pk={{ device.pk }}" class="btn btn-warning">标记不可用</a>
+                    {% else %}
+                    <a href="{% url 'device_manage' %}?status_action=available&pk={{ device.pk }}" class="btn btn-success">标记可用</a>
+                    {% endif %}
+                    
+                    <!-- 3. 删除按钮（新增，需确认弹窗防止误删） -->
+                    <a href="{% url 'device_delete' pk=device.pk %}" class="btn btn-danger" onclick="return confirm('确定要删除设备【{{ device.device_code }}】吗？删除后数据不可恢复！')">删除</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="8" class="text-center">暂无设备数据</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- 新增/编辑设备表单：保留原有逻辑，无需修改 -->
+    <div id="add_device" class="card" style="margin-top: 30px;">
+        <h3>{% if edit_device_id_js %}编辑实验设备{% else %}新增实验设备{% endif %}</h3>
+        <form method="post" id="deviceForm">
+            {% csrf_token %}
+            <input type="hidden" name="device_id" id="device_id">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <div class="form-group">
+                    <label>{{ form.device_code.label }}</label>
+                    {{ form.device_code }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.model.label }}</label>
+                    {{ form.model }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.manufacturer.label }}</label>
+                    {{ form.manufacturer }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.purchase_date.label }}</label>
+                    {{ form.purchase_date }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.purpose.label }}</label>
+                    {{ form.purpose }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.status.label }}</label>
+                    {{ form.status }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.price_internal.label }}</label>
+                    {{ form.price_internal }}
+                </div>
+                <div class="form-group">
+                    <label>{{ form.price_external.label }}</label>
+                    {{ form.price_external }}
+                </div>
+            </div>
+            <button type="submit" class="btn btn-success">保存设备信息</button>
+            <button type="button" class="btn" onclick="location.href='#top'">取消</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

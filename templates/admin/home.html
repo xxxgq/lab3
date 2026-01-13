@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}管理员首页 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'admin_home' %}">首页</a>
+    <a href="{% url 'booking_approve' %}">预约审批</a>
+    <a href="{% url 'device_manage' %}">设备管理</a>
+    <a href="{% url 'report_stat' %}">报表统计</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>设备管理员操作中心</h2>
+    <p style="margin: 10px 0;">欢迎使用江南大学实验室设备管理系统！</p>
+    <div style="display: flex; gap: 20px; margin-top: 20px;">
+        <a href="{% url 'booking_approve' %}" class="btn">
+            <i>✅</i> 处理预约申请
+        </a>
+        <a href="{% url 'device_manage' %}" class="btn btn-success">
+            <i>🔧</i> 维护设备信息
+        </a>
+        <a href="{% url 'report_stat' %}" class="btn">
+            <i>📊</i> 查看使用报表
+        </a>
+    </div>
+</div>
+{% endblock %}

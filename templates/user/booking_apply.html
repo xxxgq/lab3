@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}设备预约申请 - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'user_home' %}">首页</a>
+    <a href="{% url 'device_list' %}">设备查询</a>
+    <a href="{% url 'booking_apply' %}">预约申请</a>
+    <a href="{% url 'my_booking' %}">我的预约</a>
+    <a href="{% url 'user_profile' %}">个人信息</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>实验设备预约申请</h2>
+    {% if messages %}
+        {% for message in messages %}
+            <div style="padding: 10px; margin: 15px 0; border-radius: 4px; 
+                {% if message.tags == 'success' %}background-color: #d4edda; color: #155724;{% endif %}
+                {% if message.tags == 'error' %}background-color: #f8d7da; color: #721c24;{% endif %}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            <div class="form-group">
+                <label>设备编号</label>
+                <select name="device_id" required style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                    <option value="">请选择设备</option>
+                    {% for device in devices %}
+                        <option value="{{ device.device_code }}">{{ device.device_code }} - {{ device.model }}</option>
+                    {% empty %}
+                        <option value="">暂无可用设备</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label>设备名称/型号</label>
+                <input type="text" name="device_name" readonly 
+                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px; background-color: #e9ecef;">
+            </div>
+            <div class="form-group">
+                <label>预约日期</label>
+                <input type="date" name="booking_date" required 
+                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+            </div>
+            <div class="form-group">
+                <label>预约时段（每2小时为1单位）</label>
+                <select name="time_slot" required style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+                    <option value="">请选择时段</option>
+                    <option value="08:00-10:00">08:00 - 10:00</option>
+                    <option value="10:00-12:00">10:00 - 12:00</option>
+                    <option value="12:00-14:00">12:00 - 14:00</option>
+                    <option value="14:00-16:00">14:00 - 16:00</option>
+                    <option value="16:00-18:00">16:00 - 18:00</option>
+                    <option value="18:00-20:00">18:00 - 20:00</option>
+                </select>
+                <button type="button" id="checkAvailabilityBtn" class="btn btn-info" style="margin-top: 10px; padding: 6px 12px;">
+                    查询空闲
+                </button>
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>借用用途</label>
+                <textarea name="purpose" rows="3" placeholder="请简要说明设备使用用途（非必填）" 
+          style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;"></textarea>
+            </div>
+            {% if user_info.user_type == 'student' %}
+            <div class="form-group" style="grid-column: span 2;">
+                <label>指导教师编号</label>
+                <input type="text" name="teacher_id" placeholder="学生用户必填" required 
+                       style="width: 100%; padding: 8px; border: 1px solid #ced4da; border-radius: 4px;">
+            </div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-success" style="margin-top: 20px; padding: 8px 20px;">提交预约申请</button>
+        <button type="button" class="btn btn-secondary" style="margin-top: 20px; margin-left: 10px; padding: 8px 20px;" onclick="history.back()">返回</button>
+    </form>
+
+    <!-- 所有JavaScript代码移到这里（form之后，确保DOM已加载） -->
+    <script>
+        // 选择设备后自动填充设备名称（合并重复逻辑）
+        const deviceSelect = document.querySelector('select[name="device_id"]');
+        const deviceNameInput = document.querySelector('input[name="device_name"]');
+        
+        deviceSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                deviceNameInput.value = selectedOption.text.split(' - ')[1];
+            } else {
+                deviceNameInput.value = '';
+            }
+        });
+
+        // 查询时段是否空闲的逻辑
+        document.getElementById('checkAvailabilityBtn').addEventListener('click', function() {
+            // 获取用户选择的设备、日期、时段
+            const deviceId = deviceSelect.value;
+            const bookingDate = document.querySelector('input[name="booking_date"]').value;
+            const timeSlot = document.querySelector('select[name="time_slot"]').value;
+
+            // 验证必填参数
+            if (!deviceId) {
+                alert('请先选择设备');
+                return;
+            }
+            if (!bookingDate) {
+                alert('请选择预约日期');
+                return;
+            }
+            if (!timeSlot) {
+                alert('请选择预约时段');
+                return;
+            }
+
+            // 发送AJAX请求到后端查询接口
+            fetch(`{% url 'check_availability' %}?device_id=${deviceId}&date=${bookingDate}&time_slot=${timeSlot}`)
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('网络响应异常');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data.available) {
+                        alert('查询结果：该时段空闲，可以预约！');
+                    } else {
+                        alert(`查询结果：该时段已被占用（${data.reason || '无具体原因'}），请选择其他时段。`);
+                    }
+                })
+                .catch(error => {
+                    console.error('查询失败：', error);
+                    alert('查询出错，请稍后重试');
+                });
+        });
+    </script>
+</div>
+{% endblock %}

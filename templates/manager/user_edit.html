@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block title %}编辑用户 - {{ user.name }} - 江南大学实验室设备管理系统{% endblock %}
+
+{% block sidebar %}
+<div class="sidebar">
+    <a href="{% url 'manager_home' %}">首页</a>
+    <a href="{% url 'manager_booking_approve' %}">校外人员预约审批</a>
+    <a href="{% url 'user_manage' %}">用户管理</a>
+    <a href="{% url 'manager_report_stat' %}">报表统计</a>
+</div>
+{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>编辑用户：{{ user.name }}（{{ user.get_user_type_display }}）</h2>
+    <div style="text-align: right; margin-bottom: 20px;">
+        <a href="{% url 'user_manage' %}" class="btn btn-secondary">返回用户列表</a>
+    </div>
+    <form method="post">
+        {% csrf_token %}
+        <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+            <div class="form-group">
+                <label>{{ form.user_code.label }}</label>
+                {{ form.user_code }}
+                <small style="color: #666;">
+                    编号不可重复，修改后登录账号会同步更新为该编号<br>
+                    当前登录账号：<b>{{ user.auth_user.username }}</b>
+                </small>
+            </div>
+            <div class="form-group">
+                <label>{{ form.name.label }}</label>
+                {{ form.name }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.user_type.label }}</label>
+                {{ form.user_type }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.department.label }}</label>
+                {{ form.department }}
+            </div>
+            <div class="form-group">
+                <label>{{ form.phone.label }}</label>
+                {{ form.phone }}
+            </div>
+            <!-- 【修改1】优化密码重置字段提示，适配编号作为密码 -->
+            <div class="form-group">
+                <label>{{ form.reset_password.label }}</label>
+                {{ form.reset_password }}
+                <small style="color: #666;">
+                    留空则不修改密码<br>
+                    初始密码为用户编号：<b>{{ user.user_code }}</b>
+                </small>
+            </div>
+            <!-- 调整：借用资格字段单独一行 -->
+            <div class="form-group" style="grid-column: span 3;">
+                <label>{{ form.is_active.label }}</label>
+                {{ form.is_active }}
+            </div>
+            <!-- 【新增】快速重置密码为用户编号的选项 -->
+            <div class="form-group" style="grid-column: span 3;">
+                <label style="display: block; margin-bottom: 5px;">快速重置密码</label>
+                <input type="checkbox" name="reset_to_code" id="reset_to_code">
+                <label for="reset_to_code" style="display: inline; margin-left: 5px;">
+                    重置密码为当前用户编号（{{ user.user_code }}）
+                </label>
+                <small style="color: #666; display: block; margin-top: 5px;">
+                    勾选后，无论上方密码框是否填写，都会将密码重置为用户编号
+                </small>
+            </div>
+        </div>
+        <div style="margin-top: 20px;">
+            <button type="submit" class="btn btn-success" style="width: 120px;">保存修改</button>
+            <a href="{% url 'user_manage' %}" class="btn btn-secondary" style="width: 120px; margin-left: 10px;">返回列表</a>
+            <a href="{% url 'user_delete' pk=user.pk %}" class="btn btn-danger" style="width: 120px; margin-left: 10px;" onclick="return confirm('确定要删除用户【{{ user.name }}】吗？')">删除用户</a>
+        </div>
+    </form>
+</div>
+{% endblock %}
