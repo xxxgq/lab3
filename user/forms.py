@@ -2,9 +2,10 @@ from django import forms
 from django.contrib.auth.hashers import make_password
 from .models import UserInfo
 
+# 1. 用户信息管理表单（保留您的审核与编辑逻辑）
 class UserInfoForm(forms.ModelForm):
     """用户信息新增/编辑表单"""
-    # 【新增】密码重置字段（可选，编辑时显示）
+    # 【保留】您的密码重置字段
     reset_password = forms.CharField(
         max_length=50, 
         required=False, 
@@ -30,7 +31,7 @@ class UserInfoForm(forms.ModelForm):
     def save(self, commit=True):
         user_info = super().save(commit=False)
         
-        # 如果填写了重置密码，更新登录账号的密码
+        # 【保留】您的密码重置保存逻辑
         reset_pwd = self.cleaned_data.get('reset_password')
         if reset_pwd and user_info.auth_user:
             user_info.auth_user.password = make_password(reset_pwd)
@@ -39,9 +40,8 @@ class UserInfoForm(forms.ModelForm):
         if commit:
             user_info.save()
         return user_info
-    
-# 用户注册功能
 
+# 2. 用户注册功能（合入他人新增功能）
 class RegistrationForm(forms.ModelForm):
     """用户注册表单"""
     password = forms.CharField(
@@ -78,25 +78,21 @@ class RegistrationForm(forms.ModelForm):
         }
     
     def clean(self):
-        """表单验证"""
+        """验证密码一致性与编号唯一性"""
         cleaned_data = super().clean()
         password = cleaned_data.get('password')
         confirm_password = cleaned_data.get('confirm_password')
         user_code = cleaned_data.get('user_code')
-        user_type = cleaned_data.get('user_type')
         
-        # 验证密码一致性
         if password and confirm_password and password != confirm_password:
             raise forms.ValidationError('两次输入的密码不一致！')
         
-        # 验证用户编号唯一性
         if user_code and UserInfo.objects.filter(user_code=user_code).exists():
             raise forms.ValidationError('该用户编号已被注册！')
         
-        
         return cleaned_data
 
-# 教师维护学生列表
+# 3. 教师维护学生列表（合入他人新增功能）
 class StudentForm(forms.ModelForm):
     """学生信息表单（用于教师添加/编辑学生）"""
     class Meta:
@@ -122,38 +118,29 @@ class StudentForm(forms.ModelForm):
         }
     
     def __init__(self, *args, **kwargs):
-        # 获取教师姓名并设置到表单中
         teacher_name = kwargs.pop('teacher_name', None)
         super().__init__(*args, **kwargs)
         
         if teacher_name:
-            # 设置指导教师字段为教师姓名，并设为只读
             self.fields['advisor'].initial = teacher_name
         
-        # 如果是编辑模式（有实例且已保存），将学号字段设为只读
         if self.instance and self.instance.pk:
             self.fields['user_code'].widget.attrs['readonly'] = True
             self.fields['user_code'].widget.attrs['class'] = 'form-control readonly'
     
     def clean_user_code(self):
-        """验证学号"""
         user_code = self.cleaned_data.get('user_code')
-        
-        # 如果是编辑模式（有实例且已保存）
         if self.instance and self.instance.pk:
-            # 检查提交的学号是否与实例的学号一致
             if user_code != self.instance.user_code:
                 raise forms.ValidationError('不能修改学号！')
         else:
-            # 新增模式：检查学号是否已存在
             if UserInfo.objects.filter(user_code=user_code).exists():
                 raise forms.ValidationError('该学号已被注册！')
-        
         return user_code
-    
-# 添加学号检查表单
+
+# 4. 学号检查表单（合入他人新增功能）
 class StudentIdForm(forms.Form):
-    """第一步：学号检查表单"""
+    """用于教师添加学生时的第一步学号校验"""
     user_code = forms.CharField(
         max_length=20,
         label='学号',
@@ -162,9 +149,7 @@ class StudentIdForm(forms.Form):
     )
     
     def clean_user_code(self):
-        """验证学号"""
         user_code = self.cleaned_data.get('user_code')
-        # 检查学号格式（可选）
         if not user_code:
             raise forms.ValidationError('请输入学号！')
         return user_code
