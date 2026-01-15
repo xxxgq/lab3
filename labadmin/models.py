@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
+from django.core.serializers.json import DjangoJSONEncoder # 新增导入
 import json
 
 class Report(models.Model):

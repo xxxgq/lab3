@@ -1,5 +1,38 @@
 # 设备管理系统
 
+## 安装说明
+
+### 环境要求
+- Python 3.8+
+- Django 5.2.9
+
+### 安装步骤
+
+1. 安装项目依赖：
+```bash
+pip install -r requirements.txt
+```
+
+2. 运行数据库迁移：
+```bash
+python manage.py migrate
+```
+
+3. 创建初始用户组（可选）：
+```bash
+python manage.py shell < init_groups.py
+```
+
+4. 启动开发服务器：
+```bash
+python manage.py runserver
+```
+
+**重要提示**：如果遇到报表导出功能无法使用（如提示找不到 `openpyxl` 模块），请确保已安装所有依赖：
+```bash
+pip install -r requirements.txt
+```
+
 ## 当前进度
 
 ### 设备管理
