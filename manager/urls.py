@@ -16,4 +16,6 @@ urlpatterns = [
     path('report/', views.manager_report_stat, name='manager_report_stat'),
     # 报表导出
     path('report/export/<int:report_id>/', views.manager_export_report_csv, name='manager_export_report_csv'),
+    # 报表删除
+    path('report/delete/<int:report_id>/', views.manager_delete_report, name='manager_delete_report'),
 ]

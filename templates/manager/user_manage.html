@@ -4,27 +4,12 @@
 
 {% block sidebar %}
 <div class="sidebar">
-    {% if is_admin %}
-        <a href="{% url 'admin_home' %}">首页</a>
-        <a href="{% url 'booking_approve' %}">预约审批</a>
-        <a href="{% url 'device_manage' %}">设备管理</a>
-        <a href="{% url 'ledger:ledger_home' %}">台账</a>
-        <a href="{% url 'report_stat' %}">报表统计</a>
-    {% elif is_manager %}
-        <a href="{% url 'manager_home' %}">首页</a>
-        <a href="{% url 'manager_booking_approve' %}">校外人员预约审批</a>
-        <a href="{% url 'device_manage' %}">设备管理</a>
-        <a href="{% url 'user_manage' %}" class="active">用户管理</a>
-        <a href="{% url 'ledger:ledger_home' %}">台账</a>
-        <a href="{% url 'manager_report_stat' %}">报表统计</a>
-    {% else %}
-        <a href="{% url 'manager_home' %}">首页</a>
-        <a href="{% url 'manager_booking_approve' %}">校外人员预约审批</a>
-        <a href="{% url 'device_manage' %}">设备管理</a>
-        <a href="{% url 'user_manage' %}" class="active">用户管理</a>
-        <a href="{% url 'ledger:ledger_home' %}">台账</a>
-        <a href="{% url 'manager_report_stat' %}">报表统计</a>
-    {% endif %}
+    <a href="{% url 'manager_home' %}">首页</a>
+    <a href="{% url 'manager_booking_approve' %}">校外人员预约审批</a>
+    <a href="{% url 'device_manage' %}">设备管理</a>
+    <a href="{% url 'user_manage' %}" class="active">用户管理</a>
+    <a href="{% url 'ledger:ledger_home' %}">台账</a>
+    <a href="{% url 'manager_report_stat' %}">报表统计</a>
 </div>
 {% endblock %}
 
@@ -54,7 +39,21 @@
             <div style="font-size: 24px; font-weight: bold; color: #ffc107;">{{ users_with_bookings }}</div>
             <div style="color: #666; font-size: 14px;">有借用记录</div>
         </div>
+        {% if pending_approvals > 0 %}
+        <div style="padding: 15px; background: #fff3cd; border-radius: 5px; border-left: 4px solid #ff9800;">
+            <div style="font-size: 24px; font-weight: bold; color: #ff9800;">{{ pending_approvals }}</div>
+            <div style="color: #666; font-size: 14px;">待审核用户</div>
+        </div>
+        {% endif %}
     </div>
+    
+    <!-- 待审核用户提示 -->
+    {% if pending_approvals > 0 %}
+    <div style="padding: 15px; background: #fff3cd; border: 1px solid #ffc107; border-radius: 5px; margin-bottom: 20px;">
+        <strong>⚠️ 有 {{ pending_approvals }} 个用户待审核</strong>（教师和管理员注册需要审核）
+        <a href="?approval_status=pending" style="margin-left: 10px; color: #007bff;">查看待审核用户</a>
+    </div>
+    {% endif %}
     
     <div style="margin-bottom: 20px;">
         <!-- 1. 类型筛选按钮 -->
@@ -121,6 +120,7 @@
                 <th>联系电话</th>
                 <th>借用次数</th>
                 <th>借用资格</th>
+                <th>审核状态</th>
                 <th>操作</th>
             </tr>
         </thead>
@@ -151,6 +151,28 @@
                     {% endif %}
                 </td>
                 <td>
+                    {% if user.user_type == 'teacher' %}
+                        {% if user.approval_status == 'pending' %}
+                        <span style="color: #ff9800; font-weight: bold;">待审核</span>
+                        {% elif user.approval_status == 'approved' %}
+                        <span style="color: green;">已通过</span>
+                        {% elif user.approval_status == 'rejected' %}
+                        <span style="color: red;">已拒绝</span>
+                        {% endif %}
+                    {% else %}
+                        <span style="color: #999;">-</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <!-- 审核按钮（仅对教师和管理员，且状态为待审核） -->
+                    {% if user.user_type == 'teacher' and user.approval_status == 'pending' %}
+                    <form method="post" style="display: inline;">
+                        {% csrf_token %}
+                        <input type="hidden" name="user_id" value="{{ user.id }}">
+                        <button type="submit" name="approve_user" value="approve" class="btn btn-success" onclick="return confirm('确定要通过用户【{{ user.name }}】的注册审核吗？')">通过审核</button>
+                        <button type="submit" name="approve_user" value="reject" class="btn btn-danger" onclick="return confirm('确定要拒绝用户【{{ user.name }}】的注册审核吗？')">拒绝审核</button>
+                    </form>
+                    {% endif %}
                     <!-- 编辑按钮 -->
                     <a href="{% url 'user_edit' pk=user.pk %}" class="btn btn-primary">查看详情/编辑</a>
                     <!-- 状态切换按钮（禁用/启用） -->
