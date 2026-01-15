@@ -1,6 +1,7 @@
 """Excel批量导入学生列表功能"""
 from django.shortcuts import render, redirect
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
 from django.contrib.auth.models import User
 from user.models import UserInfo
@@ -8,6 +9,7 @@ from openpyxl import load_workbook
 from django.db import transaction
 
 @login_required
+@csrf_protect
 def import_students_excel(request):
     """教师批量导入学生（Excel）"""
     # 获取当前教师信息

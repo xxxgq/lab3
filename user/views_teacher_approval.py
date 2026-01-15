@@ -1,12 +1,14 @@
 """教师审批学生预约申请的视图"""
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_protect
 from django.contrib import messages
 from django.db.models import Q
 from user.models import UserInfo
 from booking.models import Booking, ApprovalRecord
 
 @login_required
+@csrf_protect
 def teacher_booking_approve(request):
     """教师审批学生预约申请"""
     # 获取当前教师信息

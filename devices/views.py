@@ -46,18 +46,15 @@ def device_manage(request):
     is_manager = request.user.groups.filter(name='实验室负责人').exists()
     
     if not is_admin and not is_manager and not request.user.is_superuser:
-        from django.contrib import messages
         # 如果是普通用户，重定向到普通用户首页
         try:
             from user.models import UserInfo
             user_info = UserInfo.objects.get(auth_user=request.user)
             messages.error(request, '您没有权限访问设备管理页面！')
-            from django.shortcuts import redirect
             return redirect('user_home')
         except:
             pass
         messages.error(request, '您没有权限访问设备管理页面！')
-        from django.shortcuts import redirect
         return redirect('user_login')
     
     # 1. 处理搜索逻辑（GET 请求，keyword 参数）
@@ -179,9 +176,7 @@ def device_delete(request, pk):
     is_admin = request.user.groups.filter(name='设备管理员').exists()
     is_manager = request.user.groups.filter(name='实验室负责人').exists()
     if not is_admin and not is_manager and not request.user.is_superuser:
-        from django.contrib import messages
         messages.error(request, '您没有权限删除设备！')
-        from django.shortcuts import redirect
         return redirect('user_login')
     
     # 获取要删除的设备，不存在则返回404
@@ -212,9 +207,7 @@ def device_detail(request, pk):
     is_admin = request.user.groups.filter(name='设备管理员').exists()
     is_manager = request.user.groups.filter(name='实验室负责人').exists()
     if not is_admin and not is_manager and not request.user.is_superuser:
-        from django.contrib import messages
         messages.error(request, '您没有权限访问设备详情页面！')
-        from django.shortcuts import redirect
         return redirect('user_login')
     
     # 获取当前设备数据，不存在则返回404

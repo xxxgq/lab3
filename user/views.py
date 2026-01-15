@@ -37,7 +37,6 @@ def user_profile(request):
     except UserInfo.DoesNotExist:
         messages.error(request, '未找到你的个人信息，请联系管理员！')
         # 确保重定向到首页，不会导致循环跳转
-        from django.shortcuts import redirect
         return redirect('user_home')
     
     # 教师用户：获取指导的学生列表（通过多对多关系）
@@ -47,26 +46,75 @@ def user_profile(request):
     
     # 处理表单提交
     if request.method == 'POST':
-        # 更新基础信息
-        user_info.name = request.POST.get('name')
-        user_info.gender = request.POST.get('gender')
-        user_info.department = request.POST.get('department')
-        user_info.phone = request.POST.get('phone')
-        
-        # 更新不同用户类型的专属字段
-        if user_info.user_type == 'student':
-            user_info.major = request.POST.get('major')
-            # 指导教师通过多对多关系管理，不在个人信息中直接修改
-        elif user_info.user_type == 'teacher':
-            user_info.title = request.POST.get('title')
-            user_info.research_field = request.POST.get('research_field')
-        elif user_info.user_type == 'external':
-            user_info.position = request.POST.get('position')
-            user_info.company_address = request.POST.get('company_address')
-        
-        user_info.save()
-        messages.success(request, '个人信息修改成功！')
-        return redirect('user_profile')
+        try:
+            # 获取并验证基础信息
+            name = request.POST.get('name', '').strip()
+            gender = request.POST.get('gender', '').strip()
+            department = request.POST.get('department', '').strip()
+            phone = request.POST.get('phone', '').strip()
+            
+            # 基础字段验证
+            if not name:
+                messages.error(request, '姓名不能为空！')
+                return render(request, 'user/user_profile.html', {
+                    'user_info': user_info,
+                    'advisor_students': advisor_students
+                })
+            
+            if not gender or gender not in ['男', '女']:
+                messages.error(request, '请选择有效的性别！')
+                return render(request, 'user/user_profile.html', {
+                    'user_info': user_info,
+                    'advisor_students': advisor_students
+                })
+            
+            if not department:
+                messages.error(request, '所在学院/单位不能为空！')
+                return render(request, 'user/user_profile.html', {
+                    'user_info': user_info,
+                    'advisor_students': advisor_students
+                })
+            
+            if not phone:
+                messages.error(request, '联系电话不能为空！')
+                return render(request, 'user/user_profile.html', {
+                    'user_info': user_info,
+                    'advisor_students': advisor_students
+                })
+            
+            # 更新基础信息
+            user_info.name = name
+            user_info.gender = gender
+            user_info.department = department
+            user_info.phone = phone
+            
+            # 更新不同用户类型的专属字段
+            if user_info.user_type == 'student':
+                major = request.POST.get('major', '').strip()
+                user_info.major = major if major else None
+                # 指导教师通过多对多关系管理，不在个人信息中直接修改
+            elif user_info.user_type == 'teacher':
+                title = request.POST.get('title', '').strip()
+                research_field = request.POST.get('research_field', '').strip()
+                user_info.title = title if title else None
+                user_info.research_field = research_field if research_field else None
+            elif user_info.user_type == 'external':
+                position = request.POST.get('position', '').strip()
+                company_address = request.POST.get('company_address', '').strip()
+                user_info.position = position if position else None
+                user_info.company_address = company_address if company_address else None
+            
+            # 保存修改
+            user_info.save()
+            messages.success(request, '个人信息修改成功！')
+            return redirect('user_profile')
+            
+        except Exception as e:
+            messages.error(request, f'保存失败：{str(e)}')
+            return render(request, 'user/user_profile.html', {
+                'user_info': user_info,
+                'advisor_students': advisor_students
+            })
     
     # GET请求：渲染页面
     context = {
@@ -134,9 +182,7 @@ def user_home(request):
     if not request.user.is_authenticated:
         from django.contrib.auth import logout
         logout(request)
-        from django.contrib import messages
         messages.error(request, '登录已过期，请重新登录！')
-        from django.shortcuts import redirect
         return redirect('user_login')
     
     # 验证用户是否有UserInfo（普通用户必须有）
@@ -163,9 +209,7 @@ def user_home(request):
             # 既不是管理员也不是负责人，也没有UserInfo，这是异常情况
             from django.contrib.auth import logout
             logout(request)
-            from django.contrib import messages
             messages.error(request, '用户信息异常，请重新登录！')
-            from django.shortcuts import redirect
             return redirect('user_login')
     
     return render(request, 'user/home.html')
@@ -287,6 +331,7 @@ def teacher_required(function=None):
 
 @login_required
 @teacher_required
+@csrf_protect
 def add_student(request):
     """教师添加指导学生 - 第一步：输入学号"""
     teacher_info = UserInfo.objects.get(auth_user=request.user)
@@ -334,6 +379,7 @@ def add_student(request):
 
 @login_required
 @teacher_required
+@csrf_protect
 def add_student_full(request):
     """教师添加指导学生 - 第二步：填写完整信息（学号不存在时）"""
     teacher_info = UserInfo.objects.get(auth_user=request.user)
@@ -377,6 +423,9 @@ def add_student_full(request):
                 
             except Exception as e:
                 messages.error(request, f'添加失败：{str(e)}')
+        else:
+            # 表单验证失败
+            messages.error(request, '表单填写有误，请检查后重新提交！')
     else:
         # 初始化表单，预填学号
         form = StudentForm(teacher_name=teacher_info.name)
@@ -393,6 +442,7 @@ def add_student_full(request):
 
 @login_required
 @teacher_required
+@csrf_protect
 def edit_student(request, student_id):
     """教师编辑学生信息"""
     # 获取当前教师信息
@@ -423,6 +473,9 @@ def edit_student(request, student_id):
                 
             except Exception as e:
                 messages.error(request, f'更新失败：{str(e)}')
+        else:
+            # 表单验证失败
+            messages.error(request, '表单填写有误，请检查后重新提交！')
     else:
         form = StudentForm(instance=student, teacher_name=teacher_info.name)
     
@@ -436,6 +489,7 @@ def edit_student(request, student_id):
 
 @login_required
 @teacher_required
+@csrf_protect
 def remove_student(request, student_id):
     """教师移除指导学生（软删除）"""
     # 获取当前教师信息

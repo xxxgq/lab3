@@ -367,7 +367,6 @@ def report_stat(request):
 @login_required
 def delete_report(request, report_id):
     """删除报表（GET方式，带确认）"""
-    from django.contrib import messages
     from django.http import HttpResponseRedirect
     from django.urls import reverse
     
